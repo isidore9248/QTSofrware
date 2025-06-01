@@ -26,7 +26,7 @@ QT_CHARTS_USE_NAMESPACE // Qt Charts 命名空间
  * 此类处理用户输入，如打开/关闭串口、刷新串口列表、发送数据等，
  * 并通过SerialInfo类与物理串口交互，通过Chart类显示数据。
  */
-class USARTAss : public QMainWindow
+	class USARTAss : public QMainWindow
 {
 	Q_OBJECT
 
@@ -69,6 +69,11 @@ private slots:
 	 */
 	void updateHoveredCoordinates(int chartIndex, QPointF point);
 
+	void OpenfraemCheck_on_click();
+	void ClosefraemCheck_on_click();
+
+	void on_SetChartFrame_clicked();
+
 private:
 	/**
 	 * @brief 连接所有UI控件的信号到相应的槽函数。
@@ -94,13 +99,23 @@ private:
 	 */
 	void ShowChart();
 
+	void GettheFrameStartandEnd();
+
+	void GetChartStartFrame();
+
 private:
 	Ui::USARTAssClass ui; /**< 指向通过Qt Designer生成的UI类的实例。 */
 
-#define FRAME_START_TYPE1 "START1" /**< 定义数据帧的帧头类型1。 */
-#define FRAME_START_TYPE2 "START2" /**< 定义数据帧的帧头类型2。 */
-#define FRAME_START_TYPE3 "START3" /**< 定义数据帧的帧头类型3。 */
-#define FRAME_END "END"            /**< 定义数据帧的帧尾。 */
+	//#define FRAME_START_TYPE1 "START1" /**< 定义数据帧的帧头类型1。 */
+	//#define FRAME_START_TYPE2 "START2" /**< 定义数据帧的帧头类型2。 */
+	//#define FRAME_START_TYPE3 "START3" /**< 定义数据帧的帧头类型3。 */
+	//#define FRAME_END "END"            /**< 定义数据帧的帧尾。 */
+
+	bool RecvCheck;
+	QString StartFrame;
+	QString EndFrame;
+	QString Chart1StartFrame, Chart2StartFrame, Chart3StartFrame;
+	QString ChartEndFrame;
 
 	/**
 	 * @brief 枚举，表示串口数据接收的状态。

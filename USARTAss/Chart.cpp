@@ -71,7 +71,7 @@ void Chart::initializeChart(int chartIndex, const QString& seriesName)
 	axisX->setLabelFormat("%d");
 
 	QValueAxis* axisY = new QValueAxis();
-	axisY->setRange(-1, 50);
+	axisY->setRange(-1, 10);
 	axisY->setGridLineVisible(true);
 	axisY->setTickCount(6);
 	axisY->setLabelFormat("%.1f");
