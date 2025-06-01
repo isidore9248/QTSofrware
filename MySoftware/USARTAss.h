@@ -6,18 +6,24 @@
  * @Copyright: Copyright (c) 2025 CAUC
  */
 #pragma once
-#include <QtCharts/QChartView> // 添加此行以包含 QChartView 的定义
-QT_CHARTS_USE_NAMESPACE // Qt Charts 命名空间
-
 #include <QtWidgets/QMainWindow>
-#include "ui_USARTAss.h"
+#include "ui_MySoftware.h"
 #include "Chart.h" // Include Chart header
-#include <QSerialPort>
-#include <QSerialPortInfo>
-#include <QDialog>
-#include <QtGlobal>
-#include <QLabel>
-#include <QVBoxLayout>
+#include <QtSerialPort/QSerialPort>
+#include <QtSerialPort/QSerialPortInfo>
+#include <QtWidgets/QDialog>
+#include <QtCore/QtGlobal>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QVBoxLayout>
+#include <QtCharts/QChartView> // 添加此行以包含 QChartView 的定义
+ //using namespace QtCharts; // Qt Charts 命名空间
+
+QT_BEGIN_NAMESPACE
+namespace UI
+{
+	class USARTAss;
+}
+QT_END_NAMESPACE
 
 /**
  * @brief USARTAss类是应用程序的主窗口类。
@@ -26,7 +32,7 @@ QT_CHARTS_USE_NAMESPACE // Qt Charts 命名空间
  * 此类处理用户输入，如打开/关闭串口、刷新串口列表、发送数据等，
  * 并通过SerialInfo类与物理串口交互，通过Chart类显示数据。
  */
-	class USARTAss : public QMainWindow
+class USARTAss : public QMainWindow
 {
 	Q_OBJECT
 
@@ -104,7 +110,7 @@ private:
 	void GetChartStartFrame();
 
 private:
-	Ui::USARTAssClass ui; /**< 指向通过Qt Designer生成的UI类的实例。 */
+	Ui::MySoftware ui; /**< 指向通过Qt Designer生成的UI类的实例。 */
 
 	//#define FRAME_START_TYPE1 "START1" /**< 定义数据帧的帧头类型1。 */
 	//#define FRAME_START_TYPE2 "START2" /**< 定义数据帧的帧头类型2。 */

@@ -7,18 +7,19 @@
  */
 #pragma once
 
-#include <QtCharts>
-#include <QObject> // Added for QObject inheritance
-#include <QtCharts/QChartView> // 添加此行以包含 QChartView 的定义
+#include <QtCore/QObject> // Added for QObject inheritance
+#include <QtCharts/QChart>
+#include <QtCharts/QChartView>
+#include <QtCharts/QSplineSeries>
+#include <QtCharts/QValueAxis>
+ //using namespace QtCharts; // Qt Charts 命名空间
 
-QT_CHARTS_USE_NAMESPACE // Qt Charts 命名空间
-
-/**
- * @brief Chart类用于管理和显示图表。
- *
- * 此类提供创建、更新和访问多个图表的功能。
- * 它还处理图表上的鼠标悬停事件。
- */
+ /**
+  * @brief Chart类用于管理和显示图表。
+  *
+  * 此类提供创建、更新和访问多个图表的功能。
+  * 它还处理图表上的鼠标悬停事件。
+  */
 class Chart : public QObject // Inherit from QObject
 {
 	Q_OBJECT // Add Q_OBJECT macro

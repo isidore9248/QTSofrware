@@ -6,28 +6,23 @@
  * @Copyright: Copyright (c) 2025 CAUC
  */
 #pragma once
-#include <QtCharts/QChartView> // 添加此行以包含 QChartView 的定义
-
-QT_CHARTS_USE_NAMESPACE // Qt Charts 命名空间
-
-#include "ui_USARTAss.h"
-#include <QSerialPort>
-#include <QSerialPortInfo>
-#include <QDialog>
-#include <QtGlobal>
+#include "ui_MySoftware.h"
+#include <QtSerialPort/QSerialPort>
+#include <QtSerialPort/QSerialPortInfo>
+#include <QtWidgets/QDialog>
+#include <QtCore/QtGlobal>
 #include <vector>
-#include <QDebug>
+#include <QtCore/QDebug>
 #include <QtCharts/QChartView> // 添加此行以包含 QChartView 的定义
+ //using namespace QtCharts; // Qt Charts 命名空间
 
-QT_CHARTS_USE_NAMESPACE // Qt Charts 命名空间
-
-/**
- * @brief SerialInfo类用于管理串口通信的配置和操作。
- *
- * 此类提供设置串口参数（如波特率、数据位、停止位、校验位）、
- * 打开/关闭串口、发送和接收数据的功能。
- * 它采用单例模式确保全局只有一个串口配置实例。
- */
+ /**
+  * @brief SerialInfo类用于管理串口通信的配置和操作。
+  *
+  * 此类提供设置串口参数（如波特率、数据位、停止位、校验位）、
+  * 打开/关闭串口、发送和接收数据的功能。
+  * 它采用单例模式确保全局只有一个串口配置实例。
+  */
 class SerialInfo
 {
 public:
