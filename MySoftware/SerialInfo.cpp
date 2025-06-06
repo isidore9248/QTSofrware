@@ -97,7 +97,6 @@ void SerialInfo::SetBaudRate(qint32 baudRate)
 		throw std::invalid_argument("Invalid baud rate provided.");
 	}
 
-	// this->baudRate = baudRate;
 	qDebug() << "BaudRate:" << static_cast<int>(this->baudRate);
 }
 
@@ -134,7 +133,6 @@ void SerialInfo::SetStopBits(qint32 stopBits)
  */
 void SerialInfo::SetParity(QString parityStr)
 {
-	//this->parity = parity;
 	parity = QSerialPort::NoParity; // 默认值
 	this->parity = QSerialPort::NoParity;
 	if (parityStr == "None") parity = QSerialPort::NoParity;

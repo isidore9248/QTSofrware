@@ -14,7 +14,6 @@
 #include <vector>
 #include <QtCore/QDebug>
 #include <QtCharts/QChartView> // 添加此行以包含 QChartView 的定义
- //using namespace QtCharts; // Qt Charts 命名空间
 
  /**
   * @brief SerialInfo类用于管理串口通信的配置和操作。

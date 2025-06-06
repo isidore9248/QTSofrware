@@ -82,8 +82,6 @@ void Chart::initializeChart(int chartIndex, const QString& seriesName)
 	m_charts[chartIndex]->addAxis(axisY, Qt::AlignLeft);
 	m_series[chartIndex]->attachAxis(axisY);
 
-	//m_charts[chartIndex]->legend()->hide(); // Hide legend if not needed
-
 	qDebug() << "Chart" << chartIndex << "initialized with series:" << seriesName;
 }
 
@@ -168,8 +166,6 @@ void Chart::AddToChartData(int chartIndex, float value)
 	}
 
 	targetSeries->replace(points);
-
-	// qDebug() << "Chart" << chartIndex << "Data added:" << value << "New series size:" << targetSeries->count();
 }
 
 /**

@@ -16,7 +16,8 @@
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QVBoxLayout>
 #include <QtCharts/QChartView> // 添加此行以包含 QChartView 的定义
- //using namespace QtCharts; // Qt Charts 命名空间
+#include <vector>
+#include <memory>
 
 QT_BEGIN_NAMESPACE
 namespace UI
@@ -41,7 +42,7 @@ public:
 	 * @brief USARTAss类的构造函数。
 	 * @param parent 父QWidget对象，默认为nullptr。
 	 */
-	USARTAss(QWidget* parent = nullptr);
+	USARTAss(QWidget *parent = nullptr);
 	/**
 	 * @brief USARTAss类的析构函数。
 	 */
@@ -75,9 +76,17 @@ private slots:
 	 */
 	void updateHoveredCoordinates(int chartIndex, QPointF point);
 
+	/**
+	 * @brief 处理打开帧检查复选框点击事件的槽函数。
+	 */
 	void OpenfraemCheck_on_click();
+	/**
+	 * @brief 处理关闭帧检查复选框点击事件的槽函数。
+	 */
 	void ClosefraemCheck_on_click();
-
+	/**
+	 * @brief 处理设置图表帧按钮点击事件的槽函数。
+	 */
 	void on_SetChartFrame_clicked();
 
 private:
@@ -105,23 +114,19 @@ private:
 	 */
 	void ShowChart();
 
-	void GettheFrameStartandEnd();
-
+	/**
+	 * @brief 从UI中获取并设置图表起始帧。
+	 */
 	void GetChartStartFrame();
 
 private:
 	Ui::MySoftware ui; /**< 指向通过Qt Designer生成的UI类的实例。 */
 
-	//#define FRAME_START_TYPE1 "START1" /**< 定义数据帧的帧头类型1。 */
-	//#define FRAME_START_TYPE2 "START2" /**< 定义数据帧的帧头类型2。 */
-	//#define FRAME_START_TYPE3 "START3" /**< 定义数据帧的帧头类型3。 */
-	//#define FRAME_END "END"            /**< 定义数据帧的帧尾。 */
-
 	bool RecvCheck;
-	QString StartFrame;
 	QString EndFrame;
-	QString Chart1StartFrame, Chart2StartFrame, Chart3StartFrame;
-	QString ChartEndFrame;
+
+	std::vector<QString> ChartFrame;
+	size_t ChartFrameIndex; /**< 用于存储图表帧头的字符串数组。 */
 
 	/**
 	 * @brief 枚举，表示串口数据接收的状态。
@@ -129,16 +134,16 @@ private:
 	enum FrameState
 	{
 		WaitingForStart, /**< 等待接收帧头状态。 */
-		WaitingForData,  /**< 等待接收数据帧状态。 */
-		WaitingForEnd    /**< 等待接收帧尾状态。 */
+		WaitingForData,	 /**< 等待接收数据帧状态。 */
+		WaitingForEnd	 /**< 等待接收帧尾状态。 */
 	};
 
 	FrameState currentState = WaitingForStart; /**< 当前串口数据接收状态。 */
-	QString currentStartFrame;                 /**< 当前已接收到的帧头字符串。 */
-	float currentDataFrame;                    /**< 当前已接收到的数据帧的浮点数值。 */
+	QString currentStartFrame;				   /**< 当前已接收到的帧头字符串。 */
+	float currentDataFrame;					   /**< 当前已接收到的数据帧的浮点数值。 */
 
-	bool serialOpened;          /**< 布尔标志，指示串口是否已打开。 */
-	QString serialSendMessage;  /**< 存储待发送的串口消息。 */
-	QByteArray buffer;          /**< 用于存储从串口接收到的原始数据的缓冲区。 */
-	qint64 totalBytes;          /**< 记录从串口接收到的总字节数。 */
+	bool serialOpened;		   /**< 布尔标志，指示串口是否已打开。 */
+	QString serialSendMessage; /**< 存储待发送的串口消息。 */
+	QByteArray buffer;		   /**< 用于存储从串口接收到的原始数据的缓冲区。 */
+	qint64 totalBytes;		   /**< 记录从串口接收到的总字节数。 */
 };

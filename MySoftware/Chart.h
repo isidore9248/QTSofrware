@@ -12,7 +12,6 @@
 #include <QtCharts/QChartView>
 #include <QtCharts/QSplineSeries>
 #include <QtCharts/QValueAxis>
- //using namespace QtCharts; // Qt Charts 命名空间
 
  /**
   * @brief Chart类用于管理和显示图表。

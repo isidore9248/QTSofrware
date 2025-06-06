@@ -13,14 +13,13 @@
 #include <QMessageBox>
 #include <QRegularExpression> // Added for QRegularExpression
 
- /**
-  * @brief USARTAss类的构造函数。
-  * @param parent 父QWidget对象。
-  */
-USARTAss::USARTAss(QWidget* parent)
-	: QMainWindow(parent), serialOpened(false), serialSendMessage(), totalBytes(0)
-	, StartFrame("START1"), EndFrame("END"), RecvCheck(false),
-	Chart1StartFrame("START1"), Chart2StartFrame("START2"), Chart3StartFrame("START3"), ChartEndFrame("END")
+/**
+ * @brief USARTAss类的构造函数。
+ * @param parent 父QWidget对象。
+ */
+USARTAss::USARTAss(QWidget *parent)
+	: QMainWindow(parent), serialOpened(false), serialSendMessage(), totalBytes(0), EndFrame("END"), RecvCheck(false),
+	  ChartFrame{"START1", "START2", "START3"}, ChartFrameIndex(-1)
 {
 	ui.setupUi(this);
 
@@ -30,6 +29,8 @@ USARTAss::USARTAss(QWidget* parent)
 	ui.VDetectCoord_1->setStyleSheet("background-color: lightgray;");
 	ui.VDetectCoord_2->setStyleSheet("background-color: lightgray;");
 	ui.VDetectCoord_3->setStyleSheet("background-color: lightgray;");
+
+	qDebug() << "ChartFrame" << ChartFrame;
 }
 
 /**
@@ -55,7 +56,7 @@ void USARTAss::OpenCloseUSART_clicked()
 	{
 		serialOpened = SerialInfo::getInstance().SerialChangestate(serialOpened);
 	}
-	catch (const std::runtime_error& e)
+	catch (const std::runtime_error &e)
 	{
 		// 使用 QMessageBox 提供更清晰的错误提示
 		QMessageBox::critical(this, "USART-Err", QString("An error occurred when opening or closing the serial port: %1").arg(e.what()));
@@ -81,7 +82,7 @@ void USARTAss::OpenCloseUSART_clicked()
 		// 注意：上面的 disconnect 如果 serialPort 已经被 delete 或者置为 nullptr，直接调用 GetSerialPort() 可能会有问题。
 		// 更安全的做法是在 SerialInfo 类中管理连接的断开。
 		// 或者确保 GetSerialPort() 在 serialPort 无效时返回 nullptr，并在这里做检查。
-		QSerialPort* port = SerialInfo::getInstance().GetSerialPort();
+		QSerialPort *port = SerialInfo::getInstance().GetSerialPort();
 		if (port)
 		{
 			QObject::disconnect(port, &QSerialPort::readyRead, this, &USARTAss::RecvMessage_clicked);
@@ -108,12 +109,12 @@ void USARTAss::RefreshUSART_clicked()
 	const auto availablePorts = QSerialPortInfo::availablePorts();
 
 	// 遍历可用串口并添加到下拉框
-	for (const QSerialPortInfo& portInfo : availablePorts)
+	for (const QSerialPortInfo &portInfo : availablePorts)
 	{
 		// 获取串口的详细信息
 		QString portDetails = QString("%1  %2")
-			.arg(portInfo.portName())
-			.arg(portInfo.description().isEmpty() ? "未知" : portInfo.description());
+								  .arg(portInfo.portName())
+								  .arg(portInfo.description().isEmpty() ? "未知" : portInfo.description());
 		// 添加到下拉框
 		ui.USARTInfo->addItem(portDetails);
 	}
@@ -168,13 +169,19 @@ void USARTAss::RecvMessage_clicked()
 
 	if (RecvCheck)
 	{
+		// size_t ChartFrameIndex = -1;
+		std::vector<QString>::iterator ret; // 将变量声明移到switch外部
 		switch (currentState)
 		{
 		case WaitingForStart:
-			if (receivedData == StartFrame || receivedData == Chart1StartFrame || receivedData == Chart2StartFrame || receivedData == Chart3StartFrame)
+		{
+			ret = std::find(ChartFrame.begin(), ChartFrame.end(), receivedData);
+			if (ret != ChartFrame.end())
 			{
+				ChartFrameIndex = std::distance(ChartFrame.begin(), ret);
+				qDebug() << "Found ChartFrameIndex:" << ChartFrameIndex;
 				currentStartFrame = receivedData; // 保存帧头
-				currentState = WaitingForData;   // 切换到等待数据帧状态
+				currentState = WaitingForData;	  // 切换到等待数据帧状态
 				ui.RecvSpace->append("Received Start Frame: " + currentStartFrame);
 				qDebug() << "Received Start Frame:" << currentStartFrame;
 			}
@@ -189,15 +196,15 @@ void USARTAss::RecvMessage_clicked()
 			}
 
 			break;
-
+		}
 		case WaitingForData:
 		{
 			bool isFloat;
 			float value = receivedData.toFloat(&isFloat);
 			if (isFloat)
 			{
-				currentDataFrame = value;       // 保存数据帧
-				currentState = WaitingForEnd;  // 切换到等待帧尾状态
+				currentDataFrame = value;	  // 保存数据帧
+				currentState = WaitingForEnd; // 切换到等待帧尾状态
 				ui.RecvSpace->append("Received Data Frame: " + QString::number(currentDataFrame));
 				qDebug() << "Received Data Frame:" << currentDataFrame;
 			}
@@ -214,6 +221,7 @@ void USARTAss::RecvMessage_clicked()
 		}
 
 		case WaitingForEnd:
+		{
 			if (receivedData == EndFrame)
 			{
 				currentState = WaitingForStart; // 切换回等待帧头状态
@@ -222,20 +230,20 @@ void USARTAss::RecvMessage_clicked()
 
 				// 处理完整数据包
 				QString ShowMessage = "Complete Packet - Start: " + currentStartFrame +
-					", Data: " + QString::number(currentDataFrame) +
-					", End: " + receivedData;
+									  ", Data: " + QString::number(currentDataFrame) +
+									  ", End: " + receivedData;
 				ui.RecvSpace->append(ShowMessage);
 
-				if (currentStartFrame == Chart1StartFrame) {
-					Chart::GetInstance().AddToChartData(0, currentDataFrame);
+				qDebug() << "ChartFrameIndex:" << ChartFrameIndex;
+				qDebug() << "currentStartFrame:" << currentStartFrame;
+
+				if (ChartFrameIndex != -1)
+				{
+					Chart::GetInstance().AddToChartData(ChartFrameIndex, currentDataFrame);
+					ChartFrameIndex = -1;
 				}
-				else if (currentStartFrame == Chart2StartFrame) {
-					Chart::GetInstance().AddToChartData(1, currentDataFrame);
-				}
-				else if (currentStartFrame == Chart2StartFrame) {
-					Chart::GetInstance().AddToChartData(2, currentDataFrame);
-				}
-				else if (currentStartFrame == StartFrame) {
+				else
+				{
 				}
 			}
 			else
@@ -253,6 +261,7 @@ void USARTAss::RecvMessage_clicked()
 			ui.RecvSpace->append("Unknown State");
 			qDebug() << "Unknown State";
 			break;
+		}
 		}
 	}
 	else
@@ -273,34 +282,27 @@ void USARTAss::RecvMessage_clicked()
 void USARTAss::updateHoveredCoordinates(int chartIndex, QPointF point)
 {
 	QString coordText = QString::number(point.x(), 'f', 2) + ", " + QString::number(point.y(), 'f', 2);
-	if (chartIndex == 0) {
+	if (chartIndex == 0)
+	{
 		ui.VDetectCoord_1->setText(coordText);
 	}
-	else if (chartIndex == 1) {
-		if (ui.VDetectCoord_2) ui.VDetectCoord_2->setText(coordText);
+	else if (chartIndex == 1)
+	{
+		if (ui.VDetectCoord_2)
+			ui.VDetectCoord_2->setText(coordText);
 	}
-	else if (chartIndex == 2) {
-		if (ui.VDetectCoord_3) ui.VDetectCoord_3->setText(coordText);
+	else if (chartIndex == 2)
+	{
+		if (ui.VDetectCoord_3)
+			ui.VDetectCoord_3->setText(coordText);
 	}
 }
 
 void USARTAss::OpenfraemCheck_on_click()
 {
 	qDebug() << "i am in on click";
-	GettheFrameStartandEnd();
+	// GettheFrameStartandEnd();
 	RecvCheck = true;
-}
-
-void USARTAss::ClosefraemCheck_on_click()
-{
-	qDebug() << "i am in off click";
-	RecvCheck = false;
-}
-
-void USARTAss::on_SetChartFrame_clicked()
-{
-	qDebug() << "i am in set chart frame";
-	GetChartStartFrame();
 }
 
 /**
@@ -361,7 +363,7 @@ void USARTAss::ReadUsrSerialInfo()
 
 		qDebug() << "Serial configuration read from UI and set in SerialInfo.";
 	}
-	catch (const std::invalid_argument& e)
+	catch (const std::invalid_argument &e)
 	{
 		// 使用 QMessageBox 提供更清晰的错误提示
 		QMessageBox::warning(this, "无效输入", QString("设置串口参数时出错: %1").arg(e.what()));
@@ -410,47 +412,90 @@ void USARTAss::ShowRecvBytesCount()
 void USARTAss::ShowChart()
 {
 	// Setup for 3 chart views
-	QChartView* chartViews[] = { ui.VDetectGGraph_1, ui.VDetectGGraph_2, ui.VDetectGGraph_3 };
+	QChartView *chartViews[] = {ui.VDetectGGraph_1, ui.VDetectGGraph_2, ui.VDetectGGraph_3};
 
-	for (int i = 0; i < 3; ++i) {
-		QChart* chartInstance = Chart::GetInstance().GetChart(i);
-		if (chartInstance) {
-			if (chartViews[i]) { // Check if the QChartView pointer from UI is valid
+	for (int i = 0; i < 3; ++i)
+	{
+		QChart *chartInstance = Chart::GetInstance().GetChart(i);
+		if (chartInstance)
+		{
+			if (chartViews[i])
+			{ // Check if the QChartView pointer from UI is valid
 				chartViews[i]->setChart(chartInstance);
 				chartViews[i]->setRenderHints(QPainter::Antialiasing);
 				// Set common properties or specific ones if needed
 				// chartViews[i]->setMinimumSize(400, 300);
 				// chartViews[i]->setMaximumSize(800, 600);
 			}
-			else {
+			else
+			{
 				qDebug() << "UI QChartView VDetectGGraph_" << i + 1 << "is null.";
 			}
 		}
-		else {
-			qDebug() << "Chart instance for index" << i << "is null.";
+		else
+		{
+			qDebug() << "Chart instance for ChartFrameIndex" << i << "is null.";
 		}
 	}
 	// Connect the signal once, as it now carries the chartIndex
 	// Ensure this connection is made only once, e.g., in constructor or here with a check
 	// For simplicity, connecting it here. If ShowChart can be called multiple times, consider a QMetaObject::Connection object to manage it.
 	static QMetaObject::Connection chartSignalConnection;
-	if (chartSignalConnection) QObject::disconnect(chartSignalConnection); // Disconnect previous if any
+	if (chartSignalConnection)
+		QObject::disconnect(chartSignalConnection); // Disconnect previous if any
 	chartSignalConnection = connect(&Chart::GetInstance(), &Chart::hoveredCoordinatesChanged, this, &USARTAss::updateHoveredCoordinates);
 }
 
-void USARTAss::GettheFrameStartandEnd()
+/**
+ * @brief 处理关闭帧检查复选框点击事件的槽函数。
+ *
+ * 当用户点击“关闭帧检查”复选框时，此函数将 RecvCheck 标志设置为 false，
+ * 禁用接收数据时的帧检查逻辑。
+ */
+void USARTAss::ClosefraemCheck_on_click()
 {
-	StartFrame = ui.StartFrame->toPlainText();
-	EndFrame = ui.EndFrame->toPlainText();
-
-	// 或分开输出
-	qDebug() << "StartFrame:" << StartFrame;
-	qDebug() << "EndFrame:" << EndFrame;
+	qDebug() << "i am in off click";
+	RecvCheck = false;
 }
 
+/**
+ * @brief 处理设置图表帧按钮点击事件的槽函数。
+ *
+ * 当用户点击“设置图表帧”按钮时，此函数调用 GetChartStartFrame
+ * 从UI中读取并设置图表起始帧。
+ */
+void USARTAss::on_SetChartFrame_clicked()
+{
+	qDebug() << "i am in set chart frame";
+	GetChartStartFrame();
+}
+
+/**
+ * @brief 从UI中获取并设置图表起始帧。
+ *
+ * 此函数遍历预定义的图表帧数组，并从UI中相应的 QTextEdit 控件中
+ * 读取文本内容，将其设置为每个图表的起始帧。
+ */
 void USARTAss::GetChartStartFrame()
 {
-	Chart1StartFrame = ui.Chart1StartFrame->toPlainText();
-	Chart2StartFrame = ui.Chart2StartFrame->toPlainText();
-	Chart3StartFrame = ui.Chart3StartFrame->toPlainText();
+	for (int i = 0; i < ChartFrame.size(); i++)
+	{
+		std::shared_ptr<QTextEdit> currentEdit; // 当前处理的编辑框
+
+		// 根据索引分配对应的编辑框
+		if (i == 0)
+		{
+			currentEdit.reset(ui.Chart1StartFrame, [](auto) {}); // 使用空删除器，避免重复释放
+		}
+		else if (i == 1)
+		{
+			currentEdit.reset(ui.Chart2StartFrame, [](auto) {});
+		}
+		else if (i == 2)
+		{
+			currentEdit.reset(ui.Chart3StartFrame, [](auto) {});
+		}
+
+		ChartFrame[i] = currentEdit->toPlainText();
+	}
 }
