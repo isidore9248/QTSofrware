@@ -187,7 +187,7 @@ bool SerialInfo::SerialChangestate(bool currentState)
 	}
 	if (currentState == false)
 	{
-		if (serialPort->open(QIODevice::ReadWrite))
+		if (serialPort->open(QIODevice::ReadWrite|QIODevice::ExistingOnly))
 		{
 			qDebug() << "Serial port opened successfully.";
 			return true;
