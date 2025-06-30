@@ -1,5 +1,5 @@
 /*
- * @Description: 
+ * @Description:
  * @Version: v1.0.0
  * @Author: isidore-chen
  * @Date: 2025-06-01 23:26:24
@@ -20,8 +20,9 @@
  */
 int main(int argc, char *argv[])
 {
-    QApplication app(argc, argv);
-    USARTAss window;
-    window.show();
+    // QApplication app(argc, argv);
+    // USARTAss window;
+    // window.show();
+
     return app.exec();
 }
