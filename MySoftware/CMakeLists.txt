@@ -19,14 +19,13 @@ find_package(Qt${QT_VERSION_MAJOR}
     Widgets
     Charts
     SerialPort
-    QuickDialogs
 )
 set(CMAKE_AUTOUIC ON)
 qt_standard_project_setup()
 
 set(PROJECT_SOURCES
     main.cpp
-    MySoftware.ui
+    USARTAss.ui
     MySoftware.h
     MySoftware.cpp
     Chart.cpp
@@ -35,6 +34,9 @@ set(PROJECT_SOURCES
     SerialInfo.h
     USARTAss.cpp
     USARTAss.h
+
+    ThreadProcess.cpp
+    ThreadProcess.h
 )
 
 qt_add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})

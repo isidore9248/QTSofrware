@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="F:\QTvsProject\MySoftware\MySoftware\build\MySoftware_autogen\mocs_compilation_Debug.cpp">
+      <Filter>Source Files\Generated</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\QTvsProject\MySoftware\MySoftware\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\QTvsProject\MySoftware\MySoftware\MySoftware.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\QTvsProject\MySoftware\MySoftware\Chart.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\QTvsProject\MySoftware\MySoftware\SerialInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\QTvsProject\MySoftware\MySoftware\USARTAss.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\QTvsProject\MySoftware\MySoftware\ThreadProcess.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\QTvsProject\MySoftware\MySoftware\build\MySoftware_autogen\mocs_compilation_Release.cpp">
+      <Filter>Source Files\Generated</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\QTvsProject\MySoftware\MySoftware\build\MySoftware_autogen\mocs_compilation_MinSizeRel.cpp">
+      <Filter>Source Files\Generated</Filter>
+    </ClCompile>
+    <ClCompile Include="F:\QTvsProject\MySoftware\MySoftware\build\MySoftware_autogen\mocs_compilation_RelWithDebInfo.cpp">
+      <Filter>Source Files\Generated</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="F:\QTvsProject\MySoftware\MySoftware\MySoftware.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\QTvsProject\MySoftware\MySoftware\Chart.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\QTvsProject\MySoftware\MySoftware\SerialInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\QTvsProject\MySoftware\MySoftware\USARTAss.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\QTvsProject\MySoftware\MySoftware\ThreadProcess.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\QTvsProject\MySoftware\MySoftware\build\MySoftware_autogen\include_Debug\ui_USARTAss.h">
+      <Filter>Source Files\Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\QTvsProject\MySoftware\MySoftware\build\MySoftware_autogen\include_Release\ui_USARTAss.h">
+      <Filter>Source Files\Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\QTvsProject\MySoftware\MySoftware\build\MySoftware_autogen\include_MinSizeRel\ui_USARTAss.h">
+      <Filter>Source Files\Generated</Filter>
+    </ClInclude>
+    <ClInclude Include="F:\QTvsProject\MySoftware\MySoftware\build\MySoftware_autogen\include_RelWithDebInfo\ui_USARTAss.h">
+      <Filter>Source Files\Generated</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="F:\QTvsProject\MySoftware\MySoftware\build\CMakeFiles\e0fb40ca448edb335f1ef8b749e64c3a\autouic_(CONFIG).stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="F:\QTvsProject\MySoftware\MySoftware\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="F:\QTvsProject\MySoftware\MySoftware\USARTAss.ui" />
+    <None Include="F:\QTvsProject\MySoftware\MySoftware\build\MySoftware_autogen\autouic_Debug.stamp">
+      <Filter>Source Files\Generated</Filter>
+    </None>
+    <None Include="F:\QTvsProject\MySoftware\MySoftware\build\MySoftware_autogen\autouic_Release.stamp">
+      <Filter>Source Files\Generated</Filter>
+    </None>
+    <None Include="F:\QTvsProject\MySoftware\MySoftware\build\MySoftware_autogen\autouic_MinSizeRel.stamp">
+      <Filter>Source Files\Generated</Filter>
+    </None>
+    <None Include="F:\QTvsProject\MySoftware\MySoftware\build\MySoftware_autogen\autouic_RelWithDebInfo.stamp">
+      <Filter>Source Files\Generated</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{33E0F68E-D1E4-3274-B590-7FD8C0EE65CA}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{808C3E67-F43A-3BAC-BC9C-B53DE246BC5E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{017AEA23-66E0-3039-BE88-1D5D3629F393}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Generated">
+      <UniqueIdentifier>{2A3D9EC8-9227-3736-BD2D-1429CD3C4E88}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

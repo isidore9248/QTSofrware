@@ -6,7 +6,7 @@
  * @Copyright: Copyright (c) 2025 CAUC
  */
 #pragma once
-#include "ui_MySoftware.h"
+#include "ui_USARTAss.h"
 #include <QtSerialPort/QSerialPort>
 #include <QtSerialPort/QSerialPortInfo>
 #include <QtWidgets/QDialog>

@@ -8,18 +8,20 @@
 #include "USARTAss.h"
 #include "SerialInfo.h"
 #include "Chart.h"
+#include "ThreadProcess.h" // 确保此头文件包含 SerialThread 的完整定义
+
 #include <QDebug>
 #include <stdexcept>
 #include <QMessageBox>
 #include <QRegularExpression> // Added for QRegularExpression
 
-/**
- * @brief USARTAss类的构造函数。
- * @param parent 父QWidget对象。
- */
-USARTAss::USARTAss(QWidget *parent)
-	: QMainWindow(parent), serialOpened(false), serialSendMessage(), totalBytes(0), EndFrame("END"), RecvCheck(false),
-	  ChartFrame{"START1", "START2", "START3"}, ChartFrameIndex(-1)
+ /**
+  * @brief USARTAss类的构造函数。
+  * @param parent 父QWidget对象。
+  */
+USARTAss::USARTAss(QWidget* parent)
+	: QMainWindow(parent), serialOpened(false), serialSendMessage(), totalBytes(0), RecvCheck(false)
+
 {
 	ui.setupUi(this);
 
@@ -56,7 +58,7 @@ void USARTAss::OpenCloseUSART_clicked()
 	{
 		serialOpened = SerialInfo::getInstance().SerialChangestate(serialOpened);
 	}
-	catch (const std::runtime_error &e)
+	catch (const std::runtime_error& e)
 	{
 		// 使用 QMessageBox 提供更清晰的错误提示
 		QMessageBox::critical(this, "USART-Err", QString("An error occurred when opening or closing the serial port: %1").arg(e.what()));
@@ -82,7 +84,7 @@ void USARTAss::OpenCloseUSART_clicked()
 		// 注意：上面的 disconnect 如果 serialPort 已经被 delete 或者置为 nullptr，直接调用 GetSerialPort() 可能会有问题。
 		// 更安全的做法是在 SerialInfo 类中管理连接的断开。
 		// 或者确保 GetSerialPort() 在 serialPort 无效时返回 nullptr，并在这里做检查。
-		QSerialPort *port = SerialInfo::getInstance().GetSerialPort();
+		QSerialPort* port = SerialInfo::getInstance().GetSerialPort();
 		if (port)
 		{
 			QObject::disconnect(port, &QSerialPort::readyRead, this, &USARTAss::RecvMessage_clicked);
@@ -109,12 +111,12 @@ void USARTAss::RefreshUSART_clicked()
 	const auto availablePorts = QSerialPortInfo::availablePorts();
 
 	// 遍历可用串口并添加到下拉框
-	for (const QSerialPortInfo &portInfo : availablePorts)
+	for (const QSerialPortInfo& portInfo : availablePorts)
 	{
 		// 获取串口的详细信息
 		QString portDetails = QString("%1  %2")
-								  .arg(portInfo.portName())
-								  .arg(portInfo.description().isEmpty() ? "未知" : portInfo.description());
+			.arg(portInfo.portName())
+			.arg(portInfo.description().isEmpty() ? "未知" : portInfo.description());
 		// 添加到下拉框
 		ui.USARTInfo->addItem(portDetails);
 	}
@@ -170,99 +172,6 @@ void USARTAss::RecvMessage_clicked()
 	if (RecvCheck)
 	{
 		// size_t ChartFrameIndex = -1;
-		std::vector<QString>::iterator ret; // 将变量声明移到switch外部
-		switch (currentState)
-		{
-		case WaitingForStart:
-		{
-			ret = std::find(ChartFrame.begin(), ChartFrame.end(), receivedData);
-			if (ret != ChartFrame.end())
-			{
-				ChartFrameIndex = std::distance(ChartFrame.begin(), ret);
-				qDebug() << "Found ChartFrameIndex:" << ChartFrameIndex;
-				currentStartFrame = receivedData; // 保存帧头
-				currentState = WaitingForData;	  // 切换到等待数据帧状态
-				ui.RecvSpace->append("Received Start Frame: " + currentStartFrame);
-				qDebug() << "Received Start Frame:" << currentStartFrame;
-			}
-			else
-			{
-				this->currentState = WaitingForStart;
-				this->currentStartFrame.clear();
-				this->currentDataFrame = 0.0f;
-
-				ui.RecvSpace->append("Invalid Start Frame: " + receivedData);
-				qDebug() << "Invalid Start Frame:" << receivedData;
-			}
-
-			break;
-		}
-		case WaitingForData:
-		{
-			bool isFloat;
-			float value = receivedData.toFloat(&isFloat);
-			if (isFloat)
-			{
-				currentDataFrame = value;	  // 保存数据帧
-				currentState = WaitingForEnd; // 切换到等待帧尾状态
-				ui.RecvSpace->append("Received Data Frame: " + QString::number(currentDataFrame));
-				qDebug() << "Received Data Frame:" << currentDataFrame;
-			}
-			else
-			{
-				this->currentState = WaitingForStart;
-				this->currentStartFrame.clear();
-				this->currentDataFrame = 0.0f;
-
-				ui.RecvSpace->append("Invalid Data Frame: " + receivedData);
-				qDebug() << "Invalid Data Frame:" << receivedData;
-			}
-			break;
-		}
-
-		case WaitingForEnd:
-		{
-			if (receivedData == EndFrame)
-			{
-				currentState = WaitingForStart; // 切换回等待帧头状态
-				ui.RecvSpace->append("Received End Frame: " + receivedData);
-				qDebug() << "Received End Frame:" << receivedData;
-
-				// 处理完整数据包
-				QString ShowMessage = "Complete Packet - Start: " + currentStartFrame +
-									  ", Data: " + QString::number(currentDataFrame) +
-									  ", End: " + receivedData;
-				ui.RecvSpace->append(ShowMessage);
-
-				qDebug() << "ChartFrameIndex:" << ChartFrameIndex;
-				qDebug() << "currentStartFrame:" << currentStartFrame;
-
-				if (ChartFrameIndex != -1)
-				{
-					Chart::GetInstance().AddToChartData(ChartFrameIndex, currentDataFrame);
-					ChartFrameIndex = -1;
-				}
-				else
-				{
-				}
-			}
-			else
-			{
-				this->currentState = WaitingForStart;
-				this->currentStartFrame.clear();
-				this->currentDataFrame = 0.0f;
-
-				ui.RecvSpace->append("Invalid End Frame: " + receivedData);
-				qDebug() << "Invalid End Frame:" << receivedData;
-			}
-			break;
-
-		default:
-			ui.RecvSpace->append("Unknown State");
-			qDebug() << "Unknown State";
-			break;
-		}
-		}
 	}
 	else
 	{
@@ -334,6 +243,8 @@ void USARTAss::TotalConnect()
 
 	connect(ui.OpenfraemCheck, &QRadioButton::clicked, this, &USARTAss::OpenfraemCheck_on_click);
 	connect(ui.ClosefraemCheck, &QRadioButton::clicked, this, &USARTAss::ClosefraemCheck_on_click);
+
+	connect(threadProcess, &ThreadProcess::getInstance(), this, ProcessedOver);
 }
 
 /**
@@ -363,7 +274,7 @@ void USARTAss::ReadUsrSerialInfo()
 
 		qDebug() << "Serial configuration read from UI and set in SerialInfo.";
 	}
-	catch (const std::invalid_argument &e)
+	catch (const std::invalid_argument& e)
 	{
 		// 使用 QMessageBox 提供更清晰的错误提示
 		QMessageBox::warning(this, "无效输入", QString("设置串口参数时出错: %1").arg(e.what()));
@@ -412,11 +323,11 @@ void USARTAss::ShowRecvBytesCount()
 void USARTAss::ShowChart()
 {
 	// Setup for 3 chart views
-	QChartView *chartViews[] = {ui.VDetectGGraph_1, ui.VDetectGGraph_2, ui.VDetectGGraph_3};
+	QChartView* chartViews[] = { ui.VDetectGGraph_1, ui.VDetectGGraph_2, ui.VDetectGGraph_3 };
 
 	for (int i = 0; i < 3; ++i)
 	{
-		QChart *chartInstance = Chart::GetInstance().GetChart(i);
+		QChart* chartInstance = Chart::GetInstance().GetChart(i);
 		if (chartInstance)
 		{
 			if (chartViews[i])
@@ -468,6 +379,10 @@ void USARTAss::on_SetChartFrame_clicked()
 {
 	qDebug() << "i am in set chart frame";
 	GetChartStartFrame();
+}
+
+void USARTAss::ProcessedOver()
+{
 }
 
 /**

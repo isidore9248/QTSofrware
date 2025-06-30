@@ -7,8 +7,9 @@
  */
 #pragma once
 #include <QtWidgets/QMainWindow>
-#include "ui_MySoftware.h"
+#include "ui_USARTAss.h"
 #include "Chart.h" // Include Chart header
+#include "ThreadProcess.h"
 #include <QtSerialPort/QSerialPort>
 #include <QtSerialPort/QSerialPortInfo>
 #include <QtWidgets/QDialog>
@@ -33,7 +34,7 @@ QT_END_NAMESPACE
  * 此类处理用户输入，如打开/关闭串口、刷新串口列表、发送数据等，
  * 并通过SerialInfo类与物理串口交互，通过Chart类显示数据。
  */
-class USARTAss : public QMainWindow
+	class USARTAss : public QMainWindow
 {
 	Q_OBJECT
 
@@ -42,11 +43,14 @@ public:
 	 * @brief USARTAss类的构造函数。
 	 * @param parent 父QWidget对象，默认为nullptr。
 	 */
-	USARTAss(QWidget *parent = nullptr);
+	USARTAss(QWidget* parent = nullptr);
 	/**
 	 * @brief USARTAss类的析构函数。
 	 */
 	~USARTAss();
+
+signals:
+	void DataProcessStart();
 
 private slots:
 	/**
@@ -89,6 +93,8 @@ private slots:
 	 */
 	void on_SetChartFrame_clicked();
 
+	void ProcessedOver();
+
 private:
 	/**
 	 * @brief 连接所有UI控件的信号到相应的槽函数。
@@ -120,30 +126,13 @@ private:
 	void GetChartStartFrame();
 
 private:
-	Ui::MySoftware ui; /**< 指向通过Qt Designer生成的UI类的实例。 */
+	Ui::USARTAss ui; /**< 指向通过Qt Designer生成的UI类的实例。 */
 
 	bool RecvCheck;
-	QString EndFrame;
-
-	std::vector<QString> ChartFrame;
-	size_t ChartFrameIndex; /**< 用于存储图表帧头的字符串数组。 */
-
-	/**
-	 * @brief 枚举，表示串口数据接收的状态。
-	 */
-	enum FrameState
-	{
-		WaitingForStart, /**< 等待接收帧头状态。 */
-		WaitingForData,	 /**< 等待接收数据帧状态。 */
-		WaitingForEnd	 /**< 等待接收帧尾状态。 */
-	};
-
-	FrameState currentState = WaitingForStart; /**< 当前串口数据接收状态。 */
-	QString currentStartFrame;				   /**< 当前已接收到的帧头字符串。 */
-	float currentDataFrame;					   /**< 当前已接收到的数据帧的浮点数值。 */
-
 	bool serialOpened;		   /**< 布尔标志，指示串口是否已打开。 */
 	QString serialSendMessage; /**< 存储待发送的串口消息。 */
 	QByteArray buffer;		   /**< 用于存储从串口接收到的原始数据的缓冲区。 */
 	qint64 totalBytes;		   /**< 记录从串口接收到的总字节数。 */
+
+	ThreadProcess* threadProcess;
 };

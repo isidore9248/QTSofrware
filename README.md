@@ -27,3 +27,15 @@
         target_link_options(${PROJECT_NAME} PRIVATE "/SUBSYSTEM:CONSOLE")
     endif()    
     ```
+
+## 问题记录
+- 更改ui文件名称后，如果没有生成ui_*.h    
+    1. 执行以下命令
+    ```
+    uic uiname.ui -o ui_uiname.h
+    ```
+    2. 将生成的文件拷贝到
+    ```
+    F:\project\out\build\release\project\project_autogen\include
+    ```
+    3. 重新生成即可

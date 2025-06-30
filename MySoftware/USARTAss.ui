@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MySoftware</class>
- <widget class="QMainWindow" name="MySoftware">
+ <class>USARTAss</class>
+ <widget class="QMainWindow" name="USARTAss">
   <property name="geometry">
    <rect>
     <x>0</x>
