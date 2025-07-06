@@ -1,3 +1,0 @@
-F:/QTvsProject/MySoftware/MySoftware/build/CMakeFiles/MySoftware.dir
-F:/QTvsProject/MySoftware/MySoftware/build/CMakeFiles/ALL_BUILD.dir
-F:/QTvsProject/MySoftware/MySoftware/build/CMakeFiles/ZERO_CHECK.dir

@@ -1,6 +1,0 @@
-{
-    "files.associations": {
-        "*.pdf": "bat",
-        "qapplication": "cpp"
-    }
-}

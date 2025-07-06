@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
 
-project("MySoftware")
+project("MySoftWare")
 
-add_subdirectory("MySoftware")
+add_subdirectory("MySoftWare")

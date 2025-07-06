@@ -11,13 +11,31 @@
 #include <QMessageBox>
 #include <QRegularExpression> // Added for QRegularExpression
 
-/**
- * @brief SerialInfo类的构造函数。
- * 初始化串口参数为默认值。
- */
-SerialInfo::SerialInfo() : dataBits(QSerialPort::Data8), stopBits(QSerialPort::OneStop),
-parity(QSerialPort::NoParity), serialPort(nullptr)
+ /**
+  * @brief SerialInfo类的构造函数。
+  * 初始化串口参数为默认值。
+  */
+SerialInfo::SerialInfo(QObject* parent) : QObject(parent), dataBits(QSerialPort::Data8), stopBits(QSerialPort::OneStop),
+parity(QSerialPort::NoParity), serialPort(nullptr), serialReadThread(new QThread(this))
 {
+	// 将 SerialInfo 对象移动到新线程
+	this->moveToThread(serialReadThread);
+
+	// 连接线程的 started 信号到 SerialInfo 的槽，以便在线程启动时进行初始化
+	connect(serialReadThread, &QThread::started, this, [this]() {
+		// 确保 serialPort 在这个线程中被创建和使用
+		if (serialPort == nullptr) {
+			serialPort = new QSerialPort();
+			ConfigureSerialPort(); // 重新配置串口，确保在正确线程中
+		}
+		// 连接 readyRead 信号
+		connect(serialPort, &QSerialPort::readyRead, this, &SerialInfo::handleReadyRead);
+		});
+
+	// 连接线程的 finished 信号，以便在线程结束时进行清理
+	connect(serialReadThread, &QThread::finished, serialReadThread, &QThread::deleteLater);
+	// 注意：serialPort 的 deleteLater 应该在 SerialInfo 的析构函数中处理，或者在线程停止时处理
+	// 这里不直接 delete serialPort，因为它可能在其他地方被引用
 }
 
 /**
@@ -26,15 +44,18 @@ parity(QSerialPort::NoParity), serialPort(nullptr)
  */
 SerialInfo::~SerialInfo()
 {
-	if (serialPort)
-	{ // 检查指针是否有效
-		if (serialPort->isOpen())
-		{
-			serialPort->close(); // 在删除前关闭串口（如果已打开）
-		}
-		delete serialPort;      // 释放内存
-		serialPort = nullptr;   // 将指针置空，避免悬挂指针 (好习惯)
+	if (serialReadThread->isRunning()) {
+		serialReadThread->quit();
+		serialReadThread->wait(); // 等待线程结束
 	}
+	if (serialPort) {
+		if (serialPort->isOpen()) {
+			serialPort->close();
+		}
+		delete serialPort;
+		serialPort = nullptr;
+	}
+	// serialReadThread 会在 finished 信号中 deleteLater
 }
 
 /**
@@ -107,10 +128,14 @@ void SerialInfo::SetBaudRate(qint32 baudRate)
 void SerialInfo::SetDataBits(qint32 dataBits)
 {
 	this->dataBits = QSerialPort::Data8; // 默认值
-	if (dataBits == 5) this->dataBits = QSerialPort::Data5;
-	else if (dataBits == 6) this->dataBits = QSerialPort::Data6;
-	else if (dataBits == 7) this->dataBits = QSerialPort::Data7;
-	else if (dataBits == 8) this->dataBits = QSerialPort::Data8;
+	if (dataBits == 5)
+		this->dataBits = QSerialPort::Data5;
+	else if (dataBits == 6)
+		this->dataBits = QSerialPort::Data6;
+	else if (dataBits == 7)
+		this->dataBits = QSerialPort::Data7;
+	else if (dataBits == 8)
+		this->dataBits = QSerialPort::Data8;
 	qDebug() << "dataBits:" << static_cast<int>(this->dataBits);
 }
 
@@ -121,9 +146,12 @@ void SerialInfo::SetDataBits(qint32 dataBits)
 void SerialInfo::SetStopBits(qint32 stopBits)
 {
 	this->stopBits = QSerialPort::OneStop; // 默认值
-	if (stopBits == 1) this->stopBits = QSerialPort::OneStop;
-	else if (stopBits == 1.5) this->stopBits = QSerialPort::OneAndHalfStop;
-	else if (stopBits == 2) this->stopBits = QSerialPort::TwoStop;
+	if (stopBits == 1)
+		this->stopBits = QSerialPort::OneStop;
+	else if (stopBits == 1.5)
+		this->stopBits = QSerialPort::OneAndHalfStop;
+	else if (stopBits == 2)
+		this->stopBits = QSerialPort::TwoStop;
 	qDebug() << "stopBits:" << static_cast<int>(this->stopBits);
 }
 
@@ -135,11 +163,16 @@ void SerialInfo::SetParity(QString parityStr)
 {
 	parity = QSerialPort::NoParity; // 默认值
 	this->parity = QSerialPort::NoParity;
-	if (parityStr == "None") parity = QSerialPort::NoParity;
-	else if (parityStr == "Even") parity = QSerialPort::EvenParity;
-	else if (parityStr == "Odd") parity = QSerialPort::OddParity;
-	else if (parityStr == "Space") parity = QSerialPort::SpaceParity;
-	else if (parityStr == "Mark") parity = QSerialPort::MarkParity;
+	if (parityStr == "None")
+		parity = QSerialPort::NoParity;
+	else if (parityStr == "Even")
+		parity = QSerialPort::EvenParity;
+	else if (parityStr == "Odd")
+		parity = QSerialPort::OddParity;
+	else if (parityStr == "Space")
+		parity = QSerialPort::SpaceParity;
+	else if (parityStr == "Mark")
+		parity = QSerialPort::MarkParity;
 }
 
 /**
@@ -183,30 +216,49 @@ bool SerialInfo::SerialChangestate(bool currentState)
 {
 	if (serialPort == nullptr)
 	{
+		// serialPort 应该在线程启动时创建，这里只是一个备用检查
 		serialPort = new QSerialPort();
+		ConfigureSerialPort();
 	}
-	if (currentState == false)
+
+	if (currentState == false) // 尝试打开串口
 	{
-		if (serialPort->open(QIODevice::ReadWrite|QIODevice::ExistingOnly))
+		if (serialPort->open(QIODevice::ReadWrite | QIODevice::ExistingOnly))
 		{
 			qDebug() << "Serial port opened successfully.";
+			// 启动线程来处理 readyRead 信号
+			if (!serialReadThread->isRunning()) {
+				serialReadThread->start();
+			}
+			emit SerialStateChanged(true); // 发出串口状态改变信号
 			return true;
 		}
 		qDebug() << "Failed to open serial port:" << serialPort->errorString();
 		throw std::runtime_error("Failed to open serial port.");
-		serialPort->close();
+		// serialPort->close(); // 如果打开失败，不需要关闭，因为它可能根本没打开
 		return false;
 	}
-	if (currentState == true)
+	else // currentState == true，尝试关闭串口
 	{
 		if (serialPort->isOpen())
 		{
+			// 断开 readyRead 信号连接，防止在关闭过程中继续触发
+			disconnect(serialPort, &QSerialPort::readyRead, this, &SerialInfo::handleReadyRead);
+
 			serialPort->close();
 			qDebug() << "Serial port closed.";
+
+			// 停止线程
+			if (serialReadThread->isRunning()) {
+				serialReadThread->quit();
+				serialReadThread->wait(); // 等待线程结束
+			}
+			emit SerialStateChanged(false); // 发出串口状态改变信号
 			return false;
 		}
 
 		qDebug() << "Serial port is already closed.";
+		emit SerialStateChanged(false); // 即使已经关闭，也发出信号
 		return false;
 	}
 }
@@ -244,36 +296,40 @@ void SerialInfo::SerialSendMessage(QString Mess)
 }
 
 /**
- * @brief 从串口接收消息。
- * @param totalBytes 用于累加接收到的总字节数的引用。
- * @return 返回包含接收数据的QByteArray。
+ * @brief 处理串口 readyRead 信号的槽函数。
+ * 读取所有可用数据并通过 DataReceived 信号发出。
  */
-QByteArray SerialInfo::SerialRecvMessage(qint64& totalBytes)
+void SerialInfo::handleReadyRead()
 {
-	QByteArray retbuffer;
-	// 检查串口指针是否有效并且串口是否已打开且可读
 	if (serialPort && serialPort->isOpen() && serialPort->isReadable())
 	{
-		// 获取接收到的总字节数
-		totalBytes += serialPort->bytesAvailable();
+		QByteArray data = serialPort->readAll();
+		if (!data.isEmpty())
+		{
+			emit DataReceived(data);
+			qDebug() << "Data received from serial port:" << data;
+		}
+	}
+}
 
-		retbuffer = serialPort->readAll();
-		qDebug() << "Data read from serial port:" << retbuffer; // 添加日志，方便调试
+/**
+ * @brief 启动串口读取线程的槽函数。
+ * 此槽函数将由外部调用，以启动串口数据接收线程。
+ */
+void SerialInfo::startSerialReadThread()
+{
+	// 实际的线程启动逻辑已经在构造函数和 SerialChangestate 中处理
+	// 这个槽函数可以作为外部触发线程启动的接口，但其内部逻辑可能很简单，
+	// 或者用于确保对象在正确线程中被初始化。
+	// 由于 SerialInfo 已经移动到 serialReadThread，这个槽函数将在 serialReadThread 中执行。
+	// 确保 serialPort 在此线程中被创建和使用。
+	if (serialPort == nullptr) {
+		serialPort = new QSerialPort();
+		ConfigureSerialPort();
 	}
-	else
-	{
-		// 如果串口未打开或不可读，可以记录一个警告或错误
-		if (serialPort)
-		{
-			// 检查 serialPort 是否为 nullptr
-			qDebug() << "Serial port is not open or not readable. isOpen:" << serialPort->isOpen() << "isReadable:" << serialPort->isReadable();
-		}
-		else
-		{
-			qDebug() << "Serial port object is null.";
-		}
-	}
-	return retbuffer;
+	// 连接 readyRead 信号到 handleReadyRead 槽
+	connect(serialPort, &QSerialPort::readyRead, this, &SerialInfo::handleReadyRead);
+	qDebug() << "Serial read thread started and readyRead connected.";
 }
 
 /**

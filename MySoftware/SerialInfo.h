@@ -14,6 +14,7 @@
 #include <vector>
 #include <QtCore/QDebug>
 #include <QtCharts/QChartView> // 添加此行以包含 QChartView 的定义
+#include <QThread>
 
  /**
   * @brief SerialInfo类用于管理串口通信的配置和操作。
@@ -22,27 +23,19 @@
   * 打开/关闭串口、发送和接收数据的功能。
   * 它采用单例模式确保全局只有一个串口配置实例。
   */
-class SerialInfo
+class SerialInfo : public QObject
 {
+	Q_OBJECT // 添加 Q_OBJECT 宏
+
 public:
 	/**
 	 * @brief SerialInfo类的构造函数。
 	 */
-	SerialInfo();
+	SerialInfo(QObject* parent = nullptr);
 	/**
 	 * @brief SerialInfo类的析构函数。
 	 */
 	~SerialInfo();
-
-	/**
-	 * @brief 获取SerialInfo类的单例实例。
-	 * @return 返回SerialInfo类的静态实例引用。
-	 */
-	static SerialInfo& getInstance()
-	{
-		static SerialInfo instance;
-		return instance;
-	}
 
 	/**
 	 * @brief 一次性设置所有串口配置信息，并保存在内部变量中。
@@ -72,12 +65,23 @@ public:
 	 * @param Mess 要发送的字符串消息。
 	 */
 	void SerialSendMessage(QString Mess);
+	// 删除 SerialRecvMessage 方法，数据接收将通过 readyRead 信号触发，并在槽函数中处理
+
+signals:
 	/**
-	 * @brief 从串口接收消息。
-	 * @param totalBytes 用于累加接收到的总字节数的引用。
-	 * @return 返回包含接收数据的QByteArray。
+	 * @brief 串口数据接收完成后发出的信号。
+	 * @param data 接收到的数据。
 	 */
-	QByteArray SerialRecvMessage(qint64& totalBytes);
+	void DataReceived(const QByteArray& data);
+	// 添加一个信号，用于通知外部串口已打开/关闭
+	void SerialStateChanged(bool isOpen);
+
+public slots:
+	//void SerialDatadisposed(float data);
+	// 添加一个槽函数，用于处理串口的 readyRead 信号
+	void handleReadyRead();
+	// 添加一个槽函数，用于在单独线程中启动数据接收循环
+	void startSerialReadThread();
 
 private:
 	/**
@@ -125,4 +129,7 @@ public:
 	QSerialPort::StopBits stopBits; /**< 停止位。 */
 	QSerialPort::Parity parity;     /**< 奇偶校验位。 */
 	QSerialPort::BaudRate baudRate; /**< 波特率。 */
+
+private:
+	QThread* serialReadThread; // 用于串口读取的线程
 };

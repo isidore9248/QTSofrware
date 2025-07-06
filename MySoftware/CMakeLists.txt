@@ -28,15 +28,12 @@ set(PROJECT_SOURCES
     USARTAss.ui
     MySoftware.h
     MySoftware.cpp
-    Chart.cpp
-    Chart.h
+
     SerialInfo.cpp
     SerialInfo.h
     USARTAss.cpp
     USARTAss.h
-
-    ThreadProcess.cpp
-    ThreadProcess.h
+    # ui_USARTAss.h
 )
 
 qt_add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})

@@ -8,8 +8,6 @@
 #pragma once
 #include <QtWidgets/QMainWindow>
 #include "ui_USARTAss.h"
-#include "Chart.h" // Include Chart header
-#include "ThreadProcess.h"
 #include <QtSerialPort/QSerialPort>
 #include <QtSerialPort/QSerialPortInfo>
 #include <QtWidgets/QDialog>
@@ -19,6 +17,8 @@
 #include <QtCharts/QChartView> // 添加此行以包含 QChartView 的定义
 #include <vector>
 #include <memory>
+#include <QThread>
+#include "SerialInfo.h" // 添加 SerialInfo 头文件
 
 QT_BEGIN_NAMESPACE
 namespace UI
@@ -27,6 +27,13 @@ namespace UI
 }
 QT_END_NAMESPACE
 
+struct PID_parameters
+{
+	float Kp; /**< 比例系数。 */
+	float Ki; /**< 积分系数。 */
+	float Kd; /**< 微分系数。 */
+};
+
 /**
  * @brief USARTAss类是应用程序的主窗口类。
  *
@@ -34,7 +41,7 @@ QT_END_NAMESPACE
  * 此类处理用户输入，如打开/关闭串口、刷新串口列表、发送数据等，
  * 并通过SerialInfo类与物理串口交互，通过Chart类显示数据。
  */
-	class USARTAss : public QMainWindow
+class USARTAss : public QMainWindow
 {
 	Q_OBJECT
 
@@ -49,9 +56,6 @@ public:
 	 */
 	~USARTAss();
 
-signals:
-	void DataProcessStart();
-
 private slots:
 	/**
 	 * @brief 处理打开/关闭串口按钮点击事件的槽函数。
@@ -65,20 +69,17 @@ private slots:
 	 * @brief 处理清空发送区按钮点击事件的槽函数。
 	 */
 	void ClearSendSpace_clicked();
+
+	void ClearRecvSpace_clicked();
 	/**
 	 * @brief 处理发送消息按钮点击事件的槽函数。
 	 */
 	void SendMessage_clicked();
 	/**
-	 * @brief 处理串口接收到数据时的readyRead信号的槽函数。
+	 * @brief 处理串口接收到数据时的信号的槽函数。
+	 * @param data 接收到的数据。
 	 */
-	void RecvMessage_clicked();
-	/**
-	 * @brief 更新UI上显示鼠标悬停坐标的标签的槽函数。
-	 * @param chartIndex 发生悬停事件的图表的索引。
-	 * @param point 悬停点的QPointF坐标。
-	 */
-	void updateHoveredCoordinates(int chartIndex, QPointF point);
+	void RecvMessage_clicked(const QByteArray& data);
 
 	/**
 	 * @brief 处理打开帧检查复选框点击事件的槽函数。
@@ -88,13 +89,10 @@ private slots:
 	 * @brief 处理关闭帧检查复选框点击事件的槽函数。
 	 */
 	void ClosefraemCheck_on_click();
-	/**
-	 * @brief 处理设置图表帧按钮点击事件的槽函数。
-	 */
-	void on_SetChartFrame_clicked();
 
-	void ProcessedOver();
-
+signals:
+	void DataDisposed(int chartIndex, float data);
+	void PIDReadyToShow(size_t index, PID_parameters PIDdata); /**< 信号，表示PID数据已准备好显示。 */
 private:
 	/**
 	 * @brief 连接所有UI控件的信号到相应的槽函数。
@@ -115,24 +113,39 @@ private:
 	 */
 	void ShowRecvBytesCount();
 
-	/**
-	 * @brief 初始化并显示应用程序中的图表。
-	 */
-	void ShowChart();
-
-	/**
-	 * @brief 从UI中获取并设置图表起始帧。
-	 */
-	void GetChartStartFrame();
+	void ShowPID(size_t index, PID_parameters PIDdata); /**< 显示PID数据的函数。 */
 
 private:
 	Ui::USARTAss ui; /**< 指向通过Qt Designer生成的UI类的实例。 */
 
 	bool RecvCheck;
+	QString EndFrame;
+
+	std::vector<QString> ChartFrame;
+	size_t FrameIndex; /**< 用于存储图表帧头的字符串数组。 */
+
+	/**
+	 * @brief 枚举，表示串口数据接收的状态。
+	 */
+	enum FrameState
+	{
+		WaitingForStart, /**< 等待接收帧头状态。 */
+		WaitingForData1, /**< 等待接收第一个数据帧状态。 */
+		WaitingForData2, /**< 等待接收第二个数据帧状态。 */
+		WaitingForData3, /**< 等待接收第三个数据帧状态。 */
+		WaitingForEnd	 /**< 等待接收帧尾状态。 */
+	};
+
+	FrameState currentState = WaitingForStart; /**< 当前串口数据接收状态。 */
+	QString currentStartFrame;				   /**< 当前已接收到的帧头字符串。 */
+	float currentDataFrame1;                   /**< 当前已接收到的第一个数据帧的浮点数值。 */
+	float currentDataFrame2;                   /**< 当前已接收到的第二个数据帧的浮点数值。 */
+	float currentDataFrame3;                   /**< 当前已接收到的第三个数据帧的浮点数值。 */
+
 	bool serialOpened;		   /**< 布尔标志，指示串口是否已打开。 */
 	QString serialSendMessage; /**< 存储待发送的串口消息。 */
 	QByteArray buffer;		   /**< 用于存储从串口接收到的原始数据的缓冲区。 */
 	qint64 totalBytes;		   /**< 记录从串口接收到的总字节数。 */
 
-	ThreadProcess* threadProcess;
+	SerialInfo* m_serialInfo;      /**< SerialInfo 对象。 */
 };
