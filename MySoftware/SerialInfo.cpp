@@ -53,7 +53,7 @@ SerialInfo::~SerialInfo()
 			serialPort->close();
 		}
 		delete serialPort;
-		serialPort = nullptr;
+		//serialPort = nullptr;
 	}
 	// serialReadThread 会在 finished 信号中 deleteLater
 }
